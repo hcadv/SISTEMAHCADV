@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(ADMIN)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+}
+
+model Cliente {
+  id           String    @id @default(cuid())
+  nome         String
+  cpf          String    @unique
+  rg           String?
+  email        String?
+  telefone     String?
+  whatsapp     String?
+  endereco     String?
+  profissao    String?
+  estadoCivil  String?
+  dataNascimento DateTime?
+  observacoes  String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  casos        Caso[]
+}
+
+model Caso {
+  id               String       @id @default(cuid())
+  numero           String?
+  titulo           String
+  descricao        String?
+  status           StatusCaso   @default(NOVO)
+  vara             String?
+  reclamada        String?
+  valor            Float?
+  dataDistribuicao DateTime?
+  clienteId        String
+  cliente          Cliente      @relation(fields: [clienteId], references: [id])
+  preJudicial      PreJudicial?
+  acordos          Acordo[]
+  documentos       Documento[]
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+}
+
+enum StatusCaso {
+  NOVO
+  PRE_JUDICIAL
+  ATIVO
+  ACORDO
+  ENCERRADO
+}
+
+model PreJudicial {
+  id                     String            @id @default(cuid())
+  casoId                 String            @unique
+  caso                   Caso              @relation(fields: [casoId], references: [id])
+  status                 StatusPreJudicial @default(AGUARDANDO_ENTREVISTA)
+  dataEntrevista         DateTime?
+  dataLimiteEntrevista   DateTime?
+  dataLimiteDocs         DateTime?
+  dataLimiteInicial      DateTime?
+  observacoesEntrevista  String?
+  docsRecebidos          String[]
+  observacoes            String?
+  createdAt              DateTime          @default(now())
+  updatedAt              DateTime          @updatedAt
+}
+
+enum StatusPreJudicial {
+  AGUARDANDO_ENTREVISTA
+  ENTREVISTA_REALIZADA
+  DOCS_PENDENTES
+  DOCS_COMPLETOS
+  INICIAL_EM_ELABORACAO
+  INICIAL_ENTREGUE
+}
+
+model Acordo {
+  id          String       @id @default(cuid())
+  casoId      String
+  caso        Caso         @relation(fields: [casoId], references: [id])
+  tipo        TipoAcordo
+  valor       Float?
+  descricao   String?
+  status      StatusAcordo @default(PENDENTE)
+  dataEnvio   DateTime?
+  dataResposta DateTime?
+  observacoes String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+enum TipoAcordo {
+  PROPOSTA_ENVIADA
+  PROPOSTA_RECEBIDA
+  CONTRAPROPOSTA
+}
+
+enum StatusAcordo {
+  PENDENTE
+  ACEITO
+  RECUSADO
+  EXPIRADO
+}
+
+model Documento {
+  id        String        @id @default(cuid())
+  casoId    String
+  caso      Caso          @relation(fields: [casoId], references: [id])
+  tipo      TipoDocumento
+  nome      String
+  conteudo  String        @db.Text
+  createdAt DateTime      @default(now())
+}
+
+enum TipoDocumento {
+  PROCURACAO
+  CONTRATO_HONORARIOS
+  PETICAO_INICIAL
+  OUTROS
+}
