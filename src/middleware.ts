@@ -1,26 +1,9 @@
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
 
-export default auth((req) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
+export const { auth: middleware } = NextAuth(authConfig);
 
-  const isPublicRoute =
-    nextUrl.pathname === "/login" ||
-    nextUrl.pathname === "/novo-cliente" ||
-    nextUrl.pathname.startsWith("/api/novo-cliente") ||
-    nextUrl.pathname.startsWith("/api/auth");
-
-  if (!isLoggedIn && !isPublicRoute) {
-    return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  if (isLoggedIn && nextUrl.pathname === "/login") {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
-  }
-
-  return NextResponse.next();
-});
+export default middleware;
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
